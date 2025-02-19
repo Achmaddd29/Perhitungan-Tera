@@ -46,11 +46,34 @@ st.markdown(
 # Judul Aplikasi
 st.markdown("<h1 class='title'>Perhitungan Kapasitas dalam Ton/Jam</h1>", unsafe_allow_html=True)
 
-# Input dari pengguna
-berat_kotor = st.number_input("Masukkan berat kotor (kg):", min_value=0.0, format="%.2f")
-waktu = st.number_input("Masukkan waktu (detik):", min_value=1.0, format="%.2f")
-berapa_jam = st.number_input("Masukkan jumlah jam:", min_value=0.0, format="%.2f")
-ketinggian = st.number_input("Masukkan ketinggian serbuk (meter):", min_value=0.0, format="%.2f")
+# Input dari pengguna dengan keterangan
+berat_kotor = st.number_input(
+    "Masukkan berat kotor (kg):",
+    min_value=0.0,
+    format="%.2f",
+    help="Berat total material dalam kilogram sebelum dikurangi berat tetap (4 kg)."
+)
+
+waktu = st.number_input(
+    "Masukkan waktu (detik):",
+    min_value=1.0,
+    format="%.2f",
+    help="Waktu proses dalam satuan detik."
+)
+
+berapa_jam = st.number_input(
+    "Masukkan jumlah jam:",
+    min_value=0.0,
+    format="%.2f",
+    help="Durasi proses dalam jam yang ingin dihitung."
+)
+
+ketinggian = st.number_input(
+    "Masukkan ketinggian serbuk (meter):",
+    min_value=0.0,
+    format="%.2f",
+    help="Tinggi tumpukan serbuk kayu dalam meter."
+)
 
 # Validasi input
 if waktu > 0:
