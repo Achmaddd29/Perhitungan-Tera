@@ -76,21 +76,49 @@ ketinggian = st.number_input(
 )
 
 # Validasi input
-if waktu > 0:
-    dasar_perhitungan = ((berat_kotor - 4) / waktu) * 3600 * berapa_jam
+if waktu > 0 and berapa_jam > 0:
+    dasar_perhitungan = ((berat_kotor - 4) / waktu) * 3600
 
     # Kondisi berdasarkan ketinggian
     if ketinggian > 1.5:
-        hasil = dasar_perhitungan * np.sqrt(ketinggian / 1.5)
+        hasil_per_jam = dasar_perhitungan * np.sqrt(ketinggian / 1.5)
     elif 0 < ketinggian <= 1.5:
-        hasil = dasar_perhitungan * (ketinggian / 1.5)
+        hasil_per_jam = dasar_perhitungan * (ketinggian / 1.5)
     else:
-        hasil = dasar_perhitungan * 0.5
+        hasil_per_jam = dasar_perhitungan * 0.5
+
+    # Total hasil berdasarkan jumlah jam yang dimasukkan
+    hasil_total = hasil_per_jam * berapa_jam
 
     # Konversi ke ton/jam
-    hasil_ton_per_jam = hasil / 1000
+    hasil_per_jam_ton = hasil_per_jam / 1000
+    hasil_total_ton = hasil_total / 1000
 
-    # Menampilkan hasil dengan tampilan lebih menarik
-    st.markdown(f"<div class='hasil-box'>Hasil perhitungan: {hasil_ton_per_jam:.2f} ton/jam</div>", unsafe_allow_html=True)
+    # Menampilkan hasil
+    st.markdown(f"<div class='hasil-box'>Hasil per jam: {hasil_per_jam_ton:.2f} ton/jam</div>", unsafe_allow_html=True)
+    st.markdown(f"<div class='hasil-box'>Hasil total untuk {berapa_jam:.2f} jam: {hasil_total_ton:.2f} ton</div>", unsafe_allow_html=True)
 else:
-    st.error("Waktu harus lebih besar dari 0")
+    st.error("Waktu dan jumlah jam harus lebih besar dari 0")
+
+# Instruksi Pemakaian
+st.markdown(
+    """
+
+    ## 📌 Instruksi Pemakaian:
+    
+    1️⃣ **Masukkan berat kotor** material dalam kilogram (kg) pada kolom pertama.
+    
+    2️⃣ **Masukkan waktu proses** dalam detik (s) pada kolom kedua.
+    
+    3️⃣ **Masukkan jumlah jam** proses yang ingin dihitung.
+    
+    4️⃣ **Masukkan ketinggian serbuk kayu** dalam meter (m).
+    
+    5️⃣ Tekan **Enter** atau klik di luar kolom input untuk melihat hasil perhitungan.
+    
+    6️⃣ Hasil akan ditampilkan dalam **ton per jam** serta **total kapasitas produksi** berdasarkan jumlah jam yang diinput.
+    
+    🎯 *Pastikan semua input sudah benar agar hasil yang didapat akurat!* ✅
+    """,
+    unsafe_allow_html=True
+)
