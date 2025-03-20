@@ -1,124 +1,117 @@
 import streamlit as st
-import numpy as np
+import pandas as pd
+import plotly.express as px
+from datetime import datetime
+import locale
 
-# Custom CSS untuk mempercantik tampilan
-st.markdown(
-    """
-    <style>
-        /* Pusatkan judul */
-        .title {
-            text-align: center;
-            font-size: 36px;
-            font-weight: bold;
-            color: #ffffff;
-        }
-        /* Background gradient */
-        body {
-            background: linear-gradient(to right, #2c3e50, #4ca1af);
-            color: white;
-        }
-        /* Styling box input */
-        .stNumberInput > label {
-            font-size: 18px;
-            font-weight: bold;
-            color: white;
-        }
-        .stTextInput, .stNumberInput, .stButton {
-            border-radius: 10px;
-            padding: 8px;
-        }
-        /* Styling hasil */
-        .hasil-box {
-            text-align: center;
-            font-size: 24px;
-            font-weight: bold;
-            background: #2ecc71;
-            padding: 10px;
-            border-radius: 10px;
-            color: white;
-            margin-top: 20px;
-        }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
+# Set bahasa Indonesia untuk format tanggal
+try:
+    locale.setlocale(locale.LC_TIME, 'id_ID.UTF-8')  # Linux/Mac
+except:
+    locale.setlocale(locale.LC_TIME, 'Indonesian')  # Windows alternatif
 
-# Judul Aplikasi
-st.markdown("<h1 class='title'>Perhitungan Kapasitas dalam Ton/Jam</h1>", unsafe_allow_html=True)
+# Fungsi untuk menghitung kapasitas rotary dryer
+def calculate_dryer_capacity(weight_wet, mc_in, mc_out, fill_time):
+    m_dry = weight_wet * ((1 - mc_in) / (1 - mc_out))
+    boxes_per_hour = 3600 / fill_time  
+    capacity_kg_per_hour = boxes_per_hour * m_dry
+    capacity_ton_per_hour = capacity_kg_per_hour / 1000
 
-# Input dari pengguna dengan keterangan
-berat_kotor = st.number_input(
-    "Masukkan berat kotor (kg):",
-    min_value=0.0,
-    format="%.2f",
-    help="Berat total material dalam kilogram sebelum dikurangi berat tetap (4 kg)."
-)
+    debug_data = {
+        "Berat Kotak Penuh (kg)": weight_wet,
+        "Moisture Content Input (%)": mc_in * 100,
+        "Moisture Content Output (%)": mc_out * 100,
+        "Waktu Isi Kotak (detik)": fill_time,
+        "Berat Kering (kg)": m_dry,
+        "Kotak per Jam": boxes_per_hour,
+        "Kapasitas (kg/jam)": capacity_kg_per_hour,
+        "Kapasitas (ton/jam)": capacity_ton_per_hour
+    }
+    return capacity_ton_per_hour, capacity_kg_per_hour, debug_data
 
-waktu = st.number_input(
-    "Masukkan waktu (detik):",
-    min_value=1.0,
-    format="%.2f",
-    help="Waktu proses dalam satuan detik."
-)
+# Konfigurasi Streamlit
+st.set_page_config(page_title="Rotary Dryer Calculator", layout="wide")
 
-berapa_jam = st.number_input(
-    "Masukkan jumlah jam:",
-    min_value=0.0,
-    format="%.2f",
-    help="Durasi proses dalam jam yang ingin dihitung."
-)
+# Tabs pada aplikasi
+tab1, tab2, tab3 = st.tabs(["ℹ️ Instruksi Pemakaian", "📊 Kalkulator", "📢 Laporan Hasil Pengeringan"])
 
-ketinggian = st.number_input(
-    "Masukkan ketinggian serbuk (meter):",
-    min_value=0.0,
-    format="%.2f",
-    help="Tinggi tumpukan serbuk kayu dalam meter."
-)
+# Tab 1: Instruksi Penggunaan
+with tab1:
+    st.title("ℹ️ Instruksi Penggunaan")
+    st.markdown("""
+    1️⃣ **Masukkan Berat Kotak Penuh**  
+    2️⃣ **Masukkan Moisture Content Input dan Output**  
+    3️⃣ **Masukkan Waktu Kotak Terisi Penuh dalam detik**  
+    4️⃣ **Klik tombol "Hitung Kapasitas" untuk melihat hasilnya**
+    """)
 
-# Validasi input
-if waktu > 0 and berapa_jam > 0:
-    dasar_perhitungan = ((berat_kotor - 4) / waktu) * 3600
-
-    # Kondisi berdasarkan ketinggian
-    if ketinggian > 1.5:
-        hasil_per_jam = dasar_perhitungan * np.sqrt(ketinggian / 1.5)
-    elif 0 < ketinggian <= 1.5:
-        hasil_per_jam = dasar_perhitungan * (ketinggian / 1.5)
-    else:
-        hasil_per_jam = dasar_perhitungan * 0.5
-
-    # Total hasil berdasarkan jumlah jam yang dimasukkan
-    hasil_total = hasil_per_jam * berapa_jam
-
-    # Konversi ke ton/jam
-    hasil_per_jam_ton = hasil_per_jam / 1000
-    hasil_total_ton = hasil_total / 1000
-
-    # Menampilkan hasil
-    st.markdown(f"<div class='hasil-box'>Hasil per jam: {hasil_per_jam_ton:.2f} ton/jam</div>", unsafe_allow_html=True)
-    st.markdown(f"<div class='hasil-box'>Hasil total untuk {berapa_jam:.2f} jam: {hasil_total_ton:.2f} ton</div>", unsafe_allow_html=True)
-else:
-    st.error("Waktu dan jumlah jam harus lebih besar dari 0")
-
-# Instruksi Pemakaian
-st.markdown(
-    """
-
-    ## 📌 Instruksi Pemakaian:
+# Tab 2: Kalkulator Kapasitas Rotary Dryer
+with tab2:
+    st.title("📌 Kalkulator Kapasitas Rotary Dryer")
     
-    1️⃣ **Masukkan berat kotor** material dalam kilogram (kg) pada kolom pertama.
+    col1, col2 = st.columns(2)
+    with col1:
+        weight_wet = st.number_input("⚖️ Berat Kotak Penuh (kg)", min_value=0.1, value=11.0, step=0.1)
+        mc_in = st.number_input("💧 Moisture Content Input (%)", min_value=0.0, max_value=100.0, value=55.0, step=0.1) / 100
+    with col2:
+        mc_out = st.number_input("🔥 Moisture Content Output (%)", min_value=0.0, max_value=100.0, value=15.0, step=0.1) / 100
+        fill_time = st.number_input("⏳ Waktu Kotak Terisi Penuh (detik)", min_value=1.0, value=14.0, step=1.0)
     
-    2️⃣ **Masukkan waktu proses** dalam detik (s) pada kolom kedua.
+    if st.button("🔍 Hitung Kapasitas"):
+        capacity_ton_per_hour, capacity_kg_per_hour, debug_data = calculate_dryer_capacity(weight_wet, mc_in, mc_out, fill_time)
+        st.success(f"✅ Kapasitas Rotary Dryer: {capacity_ton_per_hour:.2f} ton/jam")
+
+        debug_df = pd.DataFrame(debug_data.items(), columns=["Parameter", "Nilai"])
+        st.table(debug_df)
+
+        data = pd.DataFrame({"Parameter": ["Input", "Output"], "Moisture Content": [mc_in * 100, mc_out * 100]})
+        fig = px.bar(data, x="Parameter", y="Moisture Content", text="Moisture Content", title="📊 Grafik Moisture Content")
+        st.plotly_chart(fig)
+
+# Tab 3: Laporan Hasil Pengeringan
+with tab3:
+    st.title("📢 Laporan Hasil Pengeringan")
     
-    3️⃣ **Masukkan jumlah jam** proses yang ingin dihitung.
+    # Input tanggal dan shift
+    tanggal = st.date_input("📅 Pilih Tanggal Laporan", datetime.now())
+    shift = st.selectbox("🕒 Pilih Shift", ["Shift 1 - Pagi", "Shift 2 - Malam"])
     
-    4️⃣ **Masukkan ketinggian serbuk kayu** dalam meter (m).
+    # Input data pengeringan
+    start_time = st.time_input("⏰ Waktu Mulai", value=datetime.strptime("08:00", "%H:%M").time())
+    end_time = st.time_input("⏰ Waktu Selesai", value=datetime.strptime("12:00", "%H:%M").time())
+    density = st.number_input("🧪 Density Serbuk (kg/m³)", min_value=0.1, value=89.0, step=0.1)
+    selected_tera = st.selectbox("📌 Pilih Hasil TERA", ["TERA 1", "TERA 2", "TERA 3", "TERA 4", "TERA 5"])
     
-    5️⃣ Tekan **Enter** atau klik di luar kolom input untuk melihat hasil perhitungan.
+    one_hour_production = st.number_input(f"📊 Produksi per jam {selected_tera}", min_value=0, step=1)
+    total_production = st.number_input("📌 Total Produksi Selama Operasional (kg)", min_value=0, step=1)
+    total_hours = st.number_input("⏳ Total Jam Operasional", min_value=1, step=1)
+
+    # Hitung durasi produksi dalam jam
+    start_time_dt = datetime.combine(datetime.today(), start_time)
+    end_time_dt = datetime.combine(datetime.today(), end_time)
+    duration_hours = round((end_time_dt - start_time_dt).total_seconds() / 3600, 2)
     
-    6️⃣ Hasil akan ditampilkan dalam **ton per jam** serta **total kapasitas produksi** berdasarkan jumlah jam yang diinput.
-    
-    🎯 *Pastikan semua input sudah benar agar hasil yang didapat akurat!* ✅
-    """,
-    unsafe_allow_html=True
-)
+    if st.button("📄 Generate Laporan"):
+        avg_production_per_hour = total_production // total_hours if total_hours > 0 else 0
+        formatted_date = tanggal.strftime('%A, %d %B %Y').capitalize()  # Format tanggal Indonesia
+        
+        st.markdown(
+            f"""
+            ### 📅 {formatted_date} ({shift})
+            
+            📌 **Hasil {selected_tera} (Pukul {start_time.strftime('%H:%M')} - {end_time.strftime('%H:%M')})**
+            - Waktu kotak penuh : {fill_time} detik
+            - Berat Kotak (Netto) : {weight_wet -4} Kg
+            - 1 jam = {one_hour_production} kg 
+            - Total Dryer selama {duration_hours} Jam : {one_hour_production * duration_hours:.2f} kg
+            
+            📌 **Total Hasil Pengeringan**
+            - Pukul {start_time.strftime('%H:%M')} - {end_time.strftime('%H:%M')} ({total_hours} jam): {total_production} kg
+            - Rata-rata produksi per jam: {avg_production_per_hour} kg
+            
+            📌 **Parameter Bahan**
+            - Density Serbuk: {density} kg/m³
+            - 💧 Moisture Content Input: {mc_in * 100:.2f} %
+            - 💧 Moisture Content Output: {mc_out * 100:.2f} %
+            """
+        )
