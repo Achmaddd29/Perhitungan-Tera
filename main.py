@@ -4,11 +4,14 @@ import plotly.express as px
 from datetime import datetime
 import locale
 
-# Set bahasa Indonesia untuk format tanggal
+# Menentukan locale berdasarkan sistem operasi
 try:
-    locale.setlocale(locale.LC_TIME, 'id_ID.UTF-8')  # Linux/Mac
-except:
-    locale.setlocale(locale.LC_TIME, 'Indonesian')  # Windows alternatif
+    locale.setlocale(locale.LC_TIME, 'id_ID.utf8')  # Linux/MacOS
+except locale.Error:
+    try:
+        locale.setlocale(locale.LC_TIME, 'Indonesian_Indonesia')  # Windows
+    except locale.Error:
+        st.warning("Locale tidak didukung, menggunakan default.")
 
 # Fungsi untuk menghitung kapasitas rotary dryer
 def calculate_dryer_capacity(weight_wet, mc_in, mc_out, fill_time):
