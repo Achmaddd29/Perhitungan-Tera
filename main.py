@@ -4,14 +4,17 @@ import plotly.express as px
 from datetime import datetime
 import locale
 
-# Menentukan locale berdasarkan sistem operasi
+# **Harus dipanggil pertama**
+st.set_page_config(page_title="Rotary Dryer Calculator", layout="wide")
+
+# Set bahasa Indonesia untuk format tanggal
 try:
-    locale.setlocale(locale.LC_TIME, 'id_ID.utf8')  # Linux/MacOS
+    locale.setlocale(locale.LC_TIME, 'id_ID.UTF-8')  # Linux/Mac
 except locale.Error:
     try:
-        locale.setlocale(locale.LC_TIME, 'Indonesian_Indonesia')  # Windows
+        locale.setlocale(locale.LC_TIME, 'Indonesian')  # Windows alternatif
     except locale.Error:
-        st.warning("Locale tidak didukung, menggunakan default.")
+        st.warning("⚠️ Sistem tidak mendukung pengaturan bahasa Indonesia.")
 
 # Fungsi untuk menghitung kapasitas rotary dryer
 def calculate_dryer_capacity(weight_wet, mc_in, mc_out, fill_time):
@@ -31,9 +34,6 @@ def calculate_dryer_capacity(weight_wet, mc_in, mc_out, fill_time):
         "Kapasitas (ton/jam)": capacity_ton_per_hour
     }
     return capacity_ton_per_hour, capacity_kg_per_hour, debug_data
-
-# Konfigurasi Streamlit
-st.set_page_config(page_title="Rotary Dryer Calculator", layout="wide")
 
 # Tabs pada aplikasi
 tab1, tab2, tab3 = st.tabs(["ℹ️ Instruksi Pemakaian", "📊 Kalkulator", "📢 Laporan Hasil Pengeringan"])
